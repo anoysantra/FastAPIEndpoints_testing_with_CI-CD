@@ -1,0 +1,31 @@
+{
+  "auth_credentials": {
+    "username": "admin1",
+    "password": "admin123"
+  },
+  "employee_payload": {
+    "employee_id": "EMP9001",
+    "name": "Dye Spencer",
+    "department": "Quality Assurance",
+    "salary": 85000,
+    "email": "dye.spencer@example.com",
+    "address": "456 TX 78701"
+  },
+  "search_criteria": {
+    "emp_id": "EMP0412"
+  },
+  "update_criteria": {
+    "emp_id": "EMP0567"
+  },
+  "update_payload": {
+    "employee_id": "EMP0567",
+    "name": "Ananya Roy Updated",
+    "department": "Human Resources",
+    "salary": 48000.0,
+    "email": "ananya.roy@example.com",
+    "address": "Kolkata"
+  },
+  "delete_criteria": {
+    "emp_id": "EMP0834"
+  }
+}
