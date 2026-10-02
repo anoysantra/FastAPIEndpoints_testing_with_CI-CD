@@ -1,1 +1,1 @@
-API_ENDPOINT = "https://fastapi-endpoints-new.onrender.com"
+API_ENDPOINT = "https://fastapi-endpoints-new.onrender.com/"
