@@ -1,1 +1,42 @@
+name: API tests
 
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api-tests:
+    # Forked pull requests do not receive repository secrets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create test credentials file
+        env:
+          API_TEST_CREDENTIALS_JSON: ${{ secrets.API_TEST_CREDENTIALS_JSON }}
+        run: |
+          if [ -z "$API_TEST_CREDENTIALS_JSON" ]; then
+            echo "::error::Set the API_TEST_CREDENTIALS_JSON repository secret."
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$API_TEST_CREDENTIALS_JSON" > api_endpoints_employee/tests/data.json
+
+      - name: Build API test image
+        run: docker build --tag employee-api-tests ./api_endpoints_employee
+
+      - name: Run API tests
+        run: >-
+          docker run --rm
+          --volume "$GITHUB_WORKSPACE/api_endpoints_employee/tests/data.json:/app/tests/data.json:ro"
+          employee-api-tests
