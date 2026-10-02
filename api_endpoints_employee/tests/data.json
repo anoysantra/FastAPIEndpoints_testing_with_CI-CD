@@ -1,0 +1,22 @@
+{
+  "auth_credentials": {
+    "username": "admin1",
+    "password": "admin123"
+  },
+  "employee_payload": {
+    "employee_id": "",
+    "name": "Ananya Roy",
+    "department": "Quality Assurance",
+    "salary": 85000,
+    "email": "ananya.roy@example.com",
+    "address": "456 TX 78701"
+  },
+  "update_payload": {
+    "employee_id": "",
+    "name": "Ananya Roy Updated",
+    "department": "Human Resources",
+    "salary": 48000,
+    "email": "ananya.royupdated@example.com",
+    "address": "Kolkata"
+  }
+}
