@@ -8,6 +8,8 @@ import random
 
 logger = logging.getLogger(__name__)
 
+
+#USE THE PYTEST-HOOK : pytest_sessionstarts and along with it levarage storage_state of playwright to bypass login[Complex Integration]
 @pytest.fixture(scope="session")
 def auth_api_context() -> Generator[APIRequestContext, None, None]:
     with sync_playwright() as p:
