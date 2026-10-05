@@ -36,7 +36,22 @@ jobs:
         run: docker build --tag employee-api-tests ./api_endpoints_employee
 
       - name: Run API tests
+        # We only added a folder creation and a second volume mapping to catch the report file,
+        # along with appending the pytest reporting arguments at the very end.
         run: >-
+          mkdir -p ./reports &&
           docker run --rm
           --volume "$GITHUB_WORKSPACE/api_endpoints_employee/tests/data.json:/app/tests/data.json:ro"
-          employee-api-tests
+          --volume "$GITHUB_WORKSPACE/reports:/app/reports"
+          employee-api-tests pytest --html=/app/reports/report.html --self-contained-html
+
+      #🌟 The single new reporting step added to the end of your file
+      - name: Upload Pytest Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-api-report
+          path: ./reports/report.html
+          retention-days: 5
+
+
