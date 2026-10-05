@@ -1,0 +1,70 @@
+pipeline {
+	agent any
+
+	options {
+		timestamps()
+	}
+
+	parameters {
+		string(
+			name: 'API_ENDPOINT',
+			defaultValue: 'https://fastapi-endpoints-new.onrender.com',
+			description: 'Base URL of the already deployed FastAPI service'
+		)
+	}
+
+	environment {
+		TEST_IMAGE = "employee-api-tests:${BUILD_NUMBER}"
+	}
+
+	stages {
+		stage('Create test credentials') {
+			steps {
+				withCredentials([string(credentialsId: 'API_TEST_CREDENTIALS_JSON', variable: 'API_TEST_CREDENTIALS_JSON')]) {
+					sh '''
+						set +x
+						if [ -z "$API_TEST_CREDENTIALS_JSON" ]; then
+							echo "Jenkins credential API_TEST_CREDENTIALS_JSON is empty" >&2
+							exit 1
+						fi
+						umask 077
+						printf '%s' "$API_TEST_CREDENTIALS_JSON" > "$WORKSPACE/.ci-test-data.json"
+					'''
+				}
+			}
+		}
+
+		stage('Build test image') {
+			steps {
+				dir('api_endpoints_employee') {
+					sh 'docker build --pull -t "$TEST_IMAGE" .'
+				}
+			}
+		}
+
+		stage('Run API tests') {
+			steps {
+				sh '''
+					mkdir -p "$WORKSPACE/reports"
+					docker run --rm \\
+						--mount "type=bind,source=$WORKSPACE/.ci-test-data.json,target=/app/tests/data.json,readonly" \\
+						--mount "type=bind,source=$WORKSPACE/reports,target=/app/reports" \\
+						--env API_ENDPOINT="$API_ENDPOINT" \\
+						"$TEST_IMAGE" pytest -n 3 -v \\
+						--html=/app/reports/report.html \\
+						--self-contained-html
+				'''
+			}
+		}
+	}
+
+	post {
+		always {
+			archiveArtifacts artifacts: 'reports/report.html', allowEmptyArchive: true, fingerprint: true
+			sh '''
+				rm -f "$WORKSPACE/.ci-test-data.json"
+				docker image rm "$TEST_IMAGE" || true
+			'''
+		}
+	}
+}
