@@ -10,31 +10,47 @@ logger = logging.getLogger(__name__)
 
 
 #USE THE PYTEST-HOOK : pytest_sessionstarts and along with it levarage storage_state of playwright to bypass login[Complex Integration]
+
 @pytest.fixture(scope="session")
-def auth_api_context() -> Generator[APIRequestContext, None, None]:
+def auth_api_context() -> Generator[APIRequestContext, None, None]:  
     with sync_playwright() as p:
+        token = None
+        max_retries = 3
+
         request_context : APIRequestContext = p.request.new_context()
         headers = {'Content-Type': 'application/json'}
         creds = load_json_data('data.json')
         credentials = creds["auth_credentials"]
         logger.info("Authenticating test API client")
         logger.info("Requesting login endpoint: %s", f'{API_ENDPOINT}/login')
-        response = request_context.post(url = f'{API_ENDPOINT}/login', data = credentials, headers = headers)
-        response_data = response.json()
-        token = response_data.get("access_token")
-        logger.info("Login response received with status %s", response.status)
-        request_context.dispose()
 
-        if not token:
-            logger.critical("Login failed; no access token returned (status=%s)", response.status)
-            raise RuntimeError(f"Login failed with status {response.status}: no token found")
-        logger.info("Login successful; access token obtained")
+        #retryyyy logiccc
+        for retries in range(0,max_retries):
+            logger.info("Retrying with retry : %s",retries+1)
+            try:
+                response = request_context.post(url = f'{API_ENDPOINT}/login', data = credentials, headers = headers)
+                if response.ok:
+                    response_data = response.json()
+                    token = response_data.get("access_token")
+                    if token:
+                        logger.info("Token successfully fetched on attempt %s", retries + 1)
+                        break
+                    elif not token:
+                        logger.critical("Login failed; no access token returned (status=%s)", response.status)
+                        raise RuntimeError(f"Login failed with status {response.status}: no token found")
+                logger.warning("Attempt %s failed with status %s", retries + 1, response.status)
+            except Exception as e:
+                logger.error("Network error/token not found or bad response on attempt %s: %s", retries + 1, e)
+
+        #disposing off the request      
+        request_context.dispose()
         api_auth_context = p.request.new_context(
             extra_http_headers={"Authorization": f"Bearer {token}"}
         )
         #request_context.dispose()  # Dispose of the initial request context after obtaining the token
         logger.debug("Yielding authenticated API context for test execution")
         yield api_auth_context
+
         api_auth_context.dispose()
         logger.debug("Authenticated API context closed")
 
