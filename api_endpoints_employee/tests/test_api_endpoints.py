@@ -5,6 +5,7 @@ from playwright.sync_api import APIRequestContext, expect, sync_playwright
 from jsonschema import validate
 from config import API_ENDPOINT
 import random
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -111,21 +112,22 @@ def test_get_specific_employee(auth_api_context: APIRequestContext):
 def test_update_employee_data(auth_api_context: APIRequestContext, new_employee: dict):
     """Update an employee and validate the returned employee data."""
 
-    logger.info("Starting employee update test")
     updated_payload = new_employee.copy()
-    emp_id = updated_payload["employee_id"]
+    updated_emp_id = updated_payload["employee_id"]
+
+    logger.info("Starting employee update test with id : %s",updated_emp_id)
 
     employee_data_updated = {
-        "employee_id": emp_id,
+        "employee_id": updated_emp_id,
         "name": "Ananya Roy",
         "department":  "New Department",
         "salary": 55000,
-        "email": f"ananya.{emp_id}updated@example.com",
+        "email": f"ananya.{updated_emp_id}updated@example.com",
         "address": "Updated Address"
     }
 
     response_api = auth_api_context.put(
-        url=f"{API_ENDPOINT}/employees/{emp_id}", data=employee_data_updated
+        url=f"{API_ENDPOINT}/employees/{updated_emp_id}", data=employee_data_updated
     )
     response = response_api.json()
     logger.info("Employee update response status: %s", response_api.status)
@@ -147,10 +149,9 @@ def test_update_employee_data(auth_api_context: APIRequestContext, new_employee:
 
 def test_delete_employee(auth_api_context: APIRequestContext, new_employee: dict):
     """Verify the endpoint deletes the requested employee successfully."""
-
-    logger.info("Starting employee deletion test")
     employee_payload = new_employee.copy()
     emp_id = employee_payload["employee_id"]
+    logger.info("Starting employee deletion test with id : %s",emp_id)
     response_api = auth_api_context.delete(
         url=f"{API_ENDPOINT}/employees/{emp_id}"
     )

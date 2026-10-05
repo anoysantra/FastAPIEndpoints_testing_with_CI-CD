@@ -8,7 +8,7 @@ import random
 
 logger = logging.getLogger(__name__)
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def auth_api_context() -> Generator[APIRequestContext, None, None]:
     with sync_playwright() as p:
         request_context : APIRequestContext = p.request.new_context()
@@ -70,7 +70,8 @@ def new_employee(auth_api_context: APIRequestContext):
     # Call your API's delete endpoint to wipe the data
     # Adjust the URL format based on your Swagger documentation (e.g., query param or path param)
     try:
-        delete_response = auth_api_context.delete(url=f"{API_ENDPOINT}/employees{emp_id}")
+        delete_response = auth_api_context.delete(url=f"{API_ENDPOINT}/employees/{emp_id}")
+        logger.info("Deletion completed")
         if delete_response.ok:
             logger.info("[Teardown] Successfully deleted employee %s", emp_id)
         else:
